@@ -14,8 +14,7 @@ ARUCO_MARKER_SIZE = 0.05  # Size of the Aruco marker in meters
 
 # Camera calibration parameters (replace with your own calibration data)
 CAMERA_MATRIX = np.array([[921.170702, 0.000000, 459.904354],
-                          [0.000000, 919.018377, 351.238301],
-                          [0.000000, 0.000000, 1.000000]])
+                          [0.000000, 919.018377, 351.238301], [0.000000, 0.000000, 1.000000]])
 DISTORTION_COEFFS = np.array([-0.033458, 0.105152, 0.001256, -0.006647, 0.000000])
 
 
