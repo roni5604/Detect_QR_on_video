@@ -50,7 +50,7 @@ python src/detector.py
 ## Controls
 
 - **Pause/Resume**: Press `p` or `space` to pause and resume the video playback.
-- **Exit**: Press `q` to quit the video playback.
+- **Exit**: Press `q` or 'e' to exit the video playback.
 - **Step Forward**: Press `d` to move one frame forward.
 - **Step Backward**: Press `a` to move one frame backward.
 

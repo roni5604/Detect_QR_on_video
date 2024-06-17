@@ -16,11 +16,11 @@ DISTORTION_COEFFS = np.array([-0.033458, 0.105152, 0.001256, -0.006647, 0.000000
 
 def setup_paths():
     """
-     Sets up the paths for input video, output video, CSV file, and log file.
+    Sets up the paths for input video, output video, CSV file, and log file.
 
-     Returns:
-         tuple: Paths for input video, output video, CSV file, and log file.
-     """
+    Returns:
+        tuple: Paths for input video, output video, CSV file, and log file.
+    """
     base_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     video_path = os.path.join(base_dir, "TestVideos", "classVideo.mp4")
     output_video_path = os.path.join(base_dir, "Output", "output_video.mp4")
@@ -34,17 +34,17 @@ logging.basicConfig(level=logging.DEBUG, filename=log_path, filemode='w', format
 
 def initialize_video_capture(video_path):
     """
-      Initializes the video capture object.
+    Initializes the video capture object.
 
-      Args:
-          video_path (str): Path to the input video file.
+    Args:
+        video_path (str): Path to the input video file.
 
-      Returns:
-          cv2.VideoCapture: Video capture object.
+    Returns:
+        cv2.VideoCapture: Video capture object.
 
-      Raises:
-          IOError: If the video file cannot be opened.
-      """
+    Raises:
+        IOError: If the video file cannot be opened.
+    """
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         logging.error("Cannot open video file")
@@ -113,13 +113,13 @@ def calculate_pose_and_distance(corners):
 
 def process_video(cap, out, csv_writer):
     """
-       Processes the video, detects Aruco markers, annotates frames, and writes to the output video and CSV file.
+    Processes the video, detects Aruco markers, annotates frames, and writes to the output video and CSV file.
 
-       Args:
-           cap (cv2.VideoCapture): Video capture object.
-           out (cv2.VideoWriter): Video writer object.
-           csv_writer (csv.writer): CSV writer object.
-       """
+    Args:
+        cap (cv2.VideoCapture): Video capture object.
+        out (cv2.VideoWriter): Video writer object.
+        csv_writer (csv.writer): CSV writer object.
+    """
     logging.info("Processing video.")
     aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
     parameters = aruco.DetectorParameters()
@@ -163,33 +163,16 @@ def release_resources(cap, out):
     cv2.destroyAllWindows()
     logging.info("Resources released.")
 
-
-def show_controls():
-    """
-    Displays the control instructions in a separate window.
-    """
-    controls_img = np.zeros((300, 600, 3), dtype=np.uint8)
-    cv2.putText(controls_img, "Controls", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-    cv2.putText(controls_img, "- Pause/Resume: Press 'p' or 'space'", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
-    cv2.putText(controls_img, "- Exit: Press 'q'", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
-    cv2.putText(controls_img, "- Frame Forward: Press 'd'", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
-    cv2.putText(controls_img, "- Frame Backward: Press 'a'", (10, 190), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
-    cv2.imshow('Controls', controls_img)
-
-
 def show_output_video(output_video_path):
     """
-      Displays the output video with playback controls.
-
-      Args:
-          output_video_path (str): Path to the output video file.
-      """
+    Displays the output video in real-time with controls for pausing, resuming, and stepping through frames.
+    Args:
+        output_video_path (str): Path to the output video file.
+    """
     cap = cv2.VideoCapture(output_video_path)
     if not cap.isOpened():
         logging.error("Error: Could not open the output video.")
         return
-
-    show_controls()  # Display the controls
 
     paused = False  # Flag to control the pause state
     delay = 33  # Initial delay for 30 fps playback (33 ms between frames)
@@ -199,11 +182,22 @@ def show_output_video(output_video_path):
             ret, frame = cap.read()
             if not ret:
                 break
-            cv2.imshow('Output Video', frame)
+
+            # Create a black image for controls with the same width as the video frame
+            controls_img = np.zeros((220, frame.shape[1], 3), dtype=np.uint8)
+            cv2.putText(controls_img, "Controls", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            cv2.putText(controls_img, "- Pause/Resume: Press 'p' or 'space'", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+            cv2.putText(controls_img, "- Exit: Press 'q' or 'e'", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+            cv2.putText(controls_img, "- Step Forward: Press 'd'", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+            cv2.putText(controls_img, "- Step Backward: Press 'a'", (10, 190), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+
+            # Combine video frame with controls image
+            combined_img = np.vstack((frame, controls_img))
+            cv2.imshow('Output Video', combined_img)
 
         key = cv2.waitKey(delay) & 0xFF
 
-        if key == ord('q'):  # Press 'q' to quit the video display early
+        if key == ord('q') or key == ord('e'):  # Press 'q' or 'e' to exit the video display
             break
         elif key == ord('p') or key == ord(' '):  # Press 'p' or 'space' to pause/resume the video display
             paused = not paused
@@ -212,7 +206,14 @@ def show_output_video(output_video_path):
             ret, frame = cap.read()
             if not ret:
                 break
-            cv2.imshow('Output Video', frame)
+            controls_img = np.zeros((220, frame.shape[1], 3), dtype=np.uint8)
+            cv2.putText(controls_img, "Controls", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            cv2.putText(controls_img, "- Pause/Resume: Press 'p' or 'space'", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+            cv2.putText(controls_img, "- Exit: Press 'q' or 'e'", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+            cv2.putText(controls_img, "- Step Forward: Press 'd'", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+            cv2.putText(controls_img, "- Step Backward: Press 'a'", (10, 190), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+            combined_img = np.vstack((frame, controls_img))
+            cv2.imshow('Output Video', combined_img)
         elif key == ord('a') or key == ord('A'):  # Press 'a' to step back one frame when paused
             paused = True
             current_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
@@ -220,15 +221,22 @@ def show_output_video(output_video_path):
             ret, frame = cap.read()
             if not ret:
                 break
-            cv2.imshow('Output Video', frame)
+            controls_img = np.zeros((220, frame.shape[1], 3), dtype=np.uint8)
+            cv2.putText(controls_img, "Controls", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            cv2.putText(controls_img, "- Pause/Resume: Press 'p' or 'space'", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+            cv2.putText(controls_img, "- Exit: Press 'q' or 'e'", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+            cv2.putText(controls_img, "- Step Forward: Press 'd'", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+            cv2.putText(controls_img, "- Step Backward: Press 'a'", (10, 190), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+            combined_img = np.vstack((frame, controls_img))
+            cv2.imshow('Output Video', combined_img)
 
     cap.release()
     cv2.destroyAllWindows()
 
 def main():
     """
-     Main function to run the video processing and display.
-     """
+    Main function to run the video processing and display.
+    """
     logging.info("Application started.")
     video_path, output_video_path, csv_path, log_path = setup_paths()
     cap = initialize_video_capture(video_path)
