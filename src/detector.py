@@ -8,13 +8,19 @@ import csv
 # Constants
 ARUCO_MARKER_SIZE = 0.05  # Size of the Aruco marker in meters
 
-# Camera calibration parameters (replace with your own calibration data)
+# Camera calibration parameters for the camera used to capture the video
 CAMERA_MATRIX = np.array([[921.170702, 0.000000, 459.904354],
                           [0.000000, 919.018377, 351.238301],
                           [0.000000, 0.000000, 1.000000]])
 DISTORTION_COEFFS = np.array([-0.033458, 0.105152, 0.001256, -0.006647, 0.000000])
 
 def setup_paths():
+    """
+     Sets up the paths for input video, output video, CSV file, and log file.
+
+     Returns:
+         tuple: Paths for input video, output video, CSV file, and log file.
+     """
     base_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     video_path = os.path.join(base_dir, "TestVideos", "classVideo.mp4")
     output_video_path = os.path.join(base_dir, "Output", "output_video.mp4")
@@ -27,6 +33,18 @@ video_path, output_video_path, csv_path, log_path = setup_paths()
 logging.basicConfig(level=logging.DEBUG, filename=log_path, filemode='w', format='%(name)s - %(levelname)s - %(message)s')
 
 def initialize_video_capture(video_path):
+    """
+      Initializes the video capture object.
+
+      Args:
+          video_path (str): Path to the input video file.
+
+      Returns:
+          cv2.VideoCapture: Video capture object.
+
+      Raises:
+          IOError: If the video file cannot be opened.
+      """
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         logging.error("Cannot open video file")
@@ -35,12 +53,32 @@ def initialize_video_capture(video_path):
     return cap
 
 def setup_video_writer(cap, output_video_path):
+    """
+    Sets up the video writer object.
+
+    Args:
+        cap (cv2.VideoCapture): Video capture object.
+        output_video_path (str): Path to the output video file.
+
+    Returns:
+        cv2.VideoWriter: Video writer object.
+    """
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(output_video_path, fourcc, 20.0, (int(cap.get(3)), int(cap.get(4))))
     logging.info("Video writer setup complete.")
     return out
 
 def draw_annotations(frame, corners, ids, distances, yaw_angles):
+    """
+    Draws annotations on the frame, including Aruco ID, distance, and yaw angle.
+
+    Args:
+        frame (np.ndarray): Frame to draw annotations on.
+        corners (list): List of corners of detected Aruco markers.
+        ids (list): List of IDs of detected Aruco markers.
+        distances (list): List of distances to the detected Aruco markers.
+        yaw_angles (list): List of yaw angles of the detected Aruco markers.
+    """
     for i, corner in enumerate(corners):
         pts = corner.reshape((4, 2)).astype(np.int32)
         pts = pts.reshape((-1, 1, 2))
@@ -55,6 +93,15 @@ def draw_annotations(frame, corners, ids, distances, yaw_angles):
             cv2.putText(frame, f'Yaw: {yaw_angles[i]:.2f} deg', text_position, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
 def calculate_pose_and_distance(corners):
+    """
+    Calculates the pose and distance of the Aruco marker.
+
+    Args:
+        corners (np.ndarray): Corners of the detected Aruco marker.
+
+    Returns:
+        tuple: Distance, yaw angle, pitch angle, roll angle, translation vector, and rotation vector.
+    """
     rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corners, ARUCO_MARKER_SIZE, CAMERA_MATRIX, DISTORTION_COEFFS)
     distance = np.linalg.norm(tvec)
     yaw_angle = np.arctan2(tvec[0][0][0], tvec[0][0][2])
@@ -65,6 +112,14 @@ def calculate_pose_and_distance(corners):
     return distance, yaw_angle_degrees, pitch_angle, roll_angle, tvec, rvec
 
 def process_video(cap, out, csv_writer):
+    """
+       Processes the video, detects Aruco markers, annotates frames, and writes to the output video and CSV file.
+
+       Args:
+           cap (cv2.VideoCapture): Video capture object.
+           out (cv2.VideoWriter): Video writer object.
+           csv_writer (csv.writer): CSV writer object.
+       """
     logging.info("Processing video.")
     aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
     parameters = aruco.DetectorParameters()
@@ -96,6 +151,13 @@ def process_video(cap, out, csv_writer):
         frame_id += 1
 
 def release_resources(cap, out):
+    """
+    Releases the resources for video capture and video writer objects.
+
+    Args:
+        cap (cv2.VideoCapture): Video capture object.
+        out (cv2.VideoWriter): Video writer object.
+    """
     cap.release()
     out.release()
     cv2.destroyAllWindows()
@@ -103,6 +165,9 @@ def release_resources(cap, out):
 
 
 def show_controls():
+    """
+    Displays the control instructions in a separate window.
+    """
     controls_img = np.zeros((300, 600, 3), dtype=np.uint8)
     cv2.putText(controls_img, "Controls", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
     cv2.putText(controls_img, "- Pause/Resume: Press 'p' or 'space'", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
@@ -111,7 +176,14 @@ def show_controls():
     cv2.putText(controls_img, "- Frame Backward: Press 'a'", (10, 190), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
     cv2.imshow('Controls', controls_img)
 
+
 def show_output_video(output_video_path):
+    """
+      Displays the output video with playback controls.
+
+      Args:
+          output_video_path (str): Path to the output video file.
+      """
     cap = cv2.VideoCapture(output_video_path)
     if not cap.isOpened():
         logging.error("Error: Could not open the output video.")
@@ -154,6 +226,9 @@ def show_output_video(output_video_path):
     cv2.destroyAllWindows()
 
 def main():
+    """
+     Main function to run the video processing and display.
+     """
     logging.info("Application started.")
     video_path, output_video_path, csv_path, log_path = setup_paths()
     cap = initialize_video_capture(video_path)
