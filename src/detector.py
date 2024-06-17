@@ -197,7 +197,7 @@ def show_output_video(output_video_path):
 
         key = cv2.waitKey(delay) & 0xFF
 
-        if key == ord('q') or key == ord('e'):  # Press 'q' or 'e' to exit the video display
+        if key == ord('q') or key == ord('e'):  # Press 'q' or 'e' to quit the video display early
             break
         elif key == ord('p') or key == ord(' '):  # Press 'p' or 'space' to pause/resume the video display
             paused = not paused
