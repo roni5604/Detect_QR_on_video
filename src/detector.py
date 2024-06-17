@@ -5,28 +5,26 @@ import os
 import logging
 import csv
 
-# Setup logging
-logging.basicConfig(level=logging.DEBUG, filename='app.log', filemode='w',
-                    format='%(name)s - %(levelname)s - %(message)s')
-
 # Constants
 ARUCO_MARKER_SIZE = 0.05  # Size of the Aruco marker in meters
 
 # Camera calibration parameters (replace with your own calibration data)
 CAMERA_MATRIX = np.array([[921.170702, 0.000000, 459.904354],
-                          [0.000000, 919.018377, 351.238301], [0.000000, 0.000000, 1.000000]])
+                          [0.000000, 919.018377, 351.238301],
+                          [0.000000, 0.000000, 1.000000]])
 DISTORTION_COEFFS = np.array([-0.033458, 0.105152, 0.001256, -0.006647, 0.000000])
-
-
 
 def setup_paths():
     base_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     video_path = os.path.join(base_dir, "TestVideos", "classVideo.mp4")
     output_video_path = os.path.join(base_dir, "Output", "output_video.mp4")
     csv_path = os.path.join(base_dir, "Output", "output_data.csv")
-    logging.info("Paths setup complete.")
-    return video_path, output_video_path, csv_path
+    log_path = os.path.join(base_dir, "Output", "app.log")
+    return video_path, output_video_path, csv_path, log_path
 
+# Get paths and setup logging
+video_path, output_video_path, csv_path, log_path = setup_paths()
+logging.basicConfig(level=logging.DEBUG, filename=log_path, filemode='w', format='%(name)s - %(levelname)s - %(message)s')
 
 def initialize_video_capture(video_path):
     cap = cv2.VideoCapture(video_path)
@@ -36,13 +34,11 @@ def initialize_video_capture(video_path):
     logging.info("Video capture initialized.")
     return cap
 
-
 def setup_video_writer(cap, output_video_path):
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(output_video_path, fourcc, 20.0, (int(cap.get(3)), int(cap.get(4))))
     logging.info("Video writer setup complete.")
     return out
-
 
 def draw_annotations(frame, corners, ids, distances, yaw_angles):
     for i, corner in enumerate(corners):
@@ -54,21 +50,19 @@ def draw_annotations(frame, corners, ids, distances, yaw_angles):
             text_position = (pts[3][0][0], pts[3][0][1] + 30)  # Start below the bottom-left corner
             cv2.putText(frame, f'ID: {ids[i][0]}', text_position, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
             text_position = (pts[3][0][0], pts[3][0][1] + 60)
-            cv2.putText(frame, f'Distance: {distances[i]:.2f}m', text_position, cv2.FONT_HERSHEY_SIMPLEX, 1,
-                        (0, 255, 0), 2)
+            cv2.putText(frame, f'Distance: {distances[i]:.2f}m', text_position, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
             text_position = (pts[3][0][0], pts[3][0][1] + 90)
-            cv2.putText(frame, f'Yaw: {np.degrees(yaw_angles[i]):.2f} deg', text_position, cv2.FONT_HERSHEY_SIMPLEX, 1,
-                        (0, 255, 0), 2)
-
+            cv2.putText(frame, f'Yaw: {yaw_angles[i]:.2f} deg', text_position, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
 def calculate_pose_and_distance(corners):
     rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corners, ARUCO_MARKER_SIZE, CAMERA_MATRIX, DISTORTION_COEFFS)
     distance = np.linalg.norm(tvec)
     yaw_angle = np.arctan2(tvec[0][0][0], tvec[0][0][2])
-    pitch_angle = np.arctan2(tvec[0][0][1], tvec[0][0][2])
+    yaw_angle_degrees = np.degrees(yaw_angle)
+    yaw_angle_degrees = (yaw_angle_degrees + 180) % 360 - 180  # Normalize to -180 to 180 degrees
+    pitch_angle = np.degrees(np.arctan2(tvec[0][0][1], tvec[0][0][2]))
     roll_angle = 0  # Roll angle is not typically determined from a single marker's pose
-    return distance, yaw_angle, pitch_angle, roll_angle, tvec, rvec
-
+    return distance, yaw_angle_degrees, pitch_angle, roll_angle, tvec, rvec
 
 def process_video(cap, out, csv_writer):
     logging.info("Processing video.")
@@ -95,13 +89,11 @@ def process_video(cap, out, csv_writer):
                 csv_writer.writerow([frame_id, aruco_id[0],
                                      f"[{corners[i][0][0]}, {corners[i][0][1]}, {corners[i][0][2]}, {corners[i][0][3]}]",
                                      f"[{distance}, {yaw_angle}, {pitch_angle}, {roll_angle}]"])
-                logging.info(
-                    f"Frame {frame_id}: Aruco ID {aruco_id[0]} detected with distance {distance} and yaw angle {yaw_angle}.")
+                logging.info(f"Frame {frame_id}: Aruco ID {aruco_id[0]} detected with distance {distance} and yaw angle {yaw_angle}.")
             draw_annotations(frame, corners, ids, distances, yaw_angles)
 
         out.write(frame)
         frame_id += 1
-
 
 def release_resources(cap, out):
     cap.release()
@@ -110,13 +102,25 @@ def release_resources(cap, out):
     logging.info("Resources released.")
 
 
+def show_controls():
+    controls_img = np.zeros((300, 600, 3), dtype=np.uint8)
+    cv2.putText(controls_img, "Controls", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    cv2.putText(controls_img, "- Pause/Resume: Press 'p' or 'space'", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+    cv2.putText(controls_img, "- Exit: Press 'q'", (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+    cv2.putText(controls_img, "- Frame Forward: Press 'd'", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+    cv2.putText(controls_img, "- Frame Backward: Press 'a'", (10, 190), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+    cv2.imshow('Controls', controls_img)
+
 def show_output_video(output_video_path):
     cap = cv2.VideoCapture(output_video_path)
     if not cap.isOpened():
         logging.error("Error: Could not open the output video.")
         return
 
+    show_controls()  # Display the controls
+
     paused = False  # Flag to control the pause state
+    delay = 33  # Initial delay for 30 fps playback (33 ms between frames)
 
     while True:
         if not paused:
@@ -125,19 +129,33 @@ def show_output_video(output_video_path):
                 break
             cv2.imshow('Output Video', frame)
 
-        key = cv2.waitKey(1) & 0xFF
+        key = cv2.waitKey(delay) & 0xFF
 
         if key == ord('q'):  # Press 'q' to quit the video display early
             break
         elif key == ord('p') or key == ord(' '):  # Press 'p' or 'space' to pause/resume the video display
             paused = not paused
+        elif key == ord('d') or key == ord('D'):  # Press 'd' to step forward one frame when paused
+            paused = True
+            ret, frame = cap.read()
+            if not ret:
+                break
+            cv2.imshow('Output Video', frame)
+        elif key == ord('a') or key == ord('A'):  # Press 'a' to step back one frame when paused
+            paused = True
+            current_frame = cap.get(cv2.CAP_PROP_POS_FRAMES)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, max(current_frame - 2, 0))
+            ret, frame = cap.read()
+            if not ret:
+                break
+            cv2.imshow('Output Video', frame)
 
     cap.release()
     cv2.destroyAllWindows()
 
 def main():
     logging.info("Application started.")
-    video_path, output_video_path, csv_path = setup_paths()
+    video_path, output_video_path, csv_path, log_path = setup_paths()
     cap = initialize_video_capture(video_path)
     out = setup_video_writer(cap, output_video_path)
 
@@ -151,7 +169,6 @@ def main():
     logging.info("CSV file closed.")
     release_resources(cap, out)
     show_output_video(output_video_path)  # Add this to show the video
-
 
 if __name__ == "__main__":
     main()

@@ -51,6 +51,8 @@ python src/detector.py
 
 - **Pause/Resume**: Press `p` or `space` to pause and resume the video playback.
 - **Exit**: Press `q` to quit the video playback.
+- **Step Forward**: Press `d` to move one frame forward.
+- **Step Backward**: Press `a` to move one frame backward.
 
 ## Explanation of Data Processing
 
