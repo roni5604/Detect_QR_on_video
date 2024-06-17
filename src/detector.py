@@ -116,19 +116,24 @@ def show_output_video(output_video_path):
         logging.error("Error: Could not open the output video.")
         return
 
+    paused = False  # Flag to control the pause state
+
     while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
+        if not paused:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            cv2.imshow('Output Video', frame)
 
-        cv2.imshow('Output Video', frame)
+        key = cv2.waitKey(1) & 0xFF
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):  # Press 'q' to quit the video display early
+        if key == ord('q'):  # Press 'q' to quit the video display early
             break
+        elif key == ord('p') or key == ord(' '):  # Press 'p' or 'space' to pause/resume the video display
+            paused = not paused
 
     cap.release()
     cv2.destroyAllWindows()
-
 
 def main():
     logging.info("Application started.")
