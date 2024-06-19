@@ -87,6 +87,19 @@ The `app.log` file provides detailed logs of the processing, including:
 - Detected markers and their corresponding data for each frame.
 - Completion and resource release messages.
 
+## Platform-specific Note
+#### When running the script on different operating systems, note the following:
+
+Linux: Use parameters = aruco.DetectorParameters().
+
+Windows: Use parameters = aruco.DetectorParameters_create().
+
+#### Controls 
+
+Linux: Use space to pause.
+
+Windows: Use 'p' to pause.
+
 ## Directory Structure
 
 ```
