@@ -23,7 +23,9 @@ def setup_paths():
         tuple: Paths for input video, output video, CSV file, and log file.
     """
     base_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    # video_path_to_modify = os.path.join(base_dir, "TestVideos", "GoProClass.mp4")
     video_path_to_modify = os.path.join(base_dir, "TestVideos", "classVideo.mp4")
+    # video_path_to_modify = os.path.join(base_dir, "TestVideos", "challengeB.mp4")
     output_video_path_after_modification = os.path.join(base_dir, "Output", "output_video.mp4")
     csv_path_for_data = os.path.join(base_dir, "Output", "output_data.csv")
     log_path_from_logger = os.path.join(base_dir, "Output", "app.log")
@@ -139,8 +141,8 @@ def process_video(cap, out, csv_writer):
     """
     logging.info("Processing video.")
     aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
-    # parameters = aruco.DetectorParameters() # For Linux users
-    parameters = aruco.DetectorParameters_create()  # For Windows users
+    parameters = aruco.DetectorParameters() # For Linux users
+    #parameters = aruco.DetectorParameters_create()  # For Windows users
     frame_id = 0
 
     while True:
@@ -201,7 +203,7 @@ def show_output_video(output_video_path_result):
         return
 
     paused = False  # Flag to control the pause state
-    delay = 33  # Initial delay for 30 fps playback (33 ms between frames)
+    delay = 30  # Delay in milliseconds between frames
 
     while True:
         if not paused:

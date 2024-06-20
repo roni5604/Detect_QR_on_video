@@ -37,6 +37,7 @@ pip install opencv-python numpy
 ## Usage
 
 1. **Prepare the Input Video**: Place your input video file (`classVideo.mp4`) in the `TestVideos` directory.
+     You can also use other video files by replacing the existing one.
 2. **Run the Script**: Execute the Python script to process the video.
 
 ```sh
@@ -104,6 +105,8 @@ Detect_QR_on_video/
 │
 ├── TestVideos/
 │   └── classVideo.mp4
+│   └── challengeB.mp4
+│   └── GoProClass.mp4
 │
 ├── Output/   
 │   └── output_video.mp4
