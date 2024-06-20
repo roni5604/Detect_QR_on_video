@@ -94,12 +94,6 @@ Linux: Use parameters = aruco.DetectorParameters().
 
 Windows: Use parameters = aruco.DetectorParameters_create().
 
-#### Controls 
-
-Linux: Use space to pause.
-
-Windows: Use 'p' to pause.
-
 ## Directory Structure
 
 ```
@@ -119,6 +113,9 @@ Detect_QR_on_video/
 ├── src/
 │   └── detector.py       # The main script
 │   └── README.md         # Project README file
+│
+├── Tests/
+│   └── test_detector.py
 ```
 
 ## License
